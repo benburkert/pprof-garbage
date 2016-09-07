@@ -1,3 +1,10 @@
+// Package pprof-garbage writes runtime profiling data in the format expected
+// by the pprof visualization tool. The profile shows estimates for garbage
+// allocations over a given time duration:
+//
+//     go tool pprof http://127.0.0.1:6000/debug/pprof/garbage?debug=1
+//
+// See https://github.com/golang/go/issues/16629 for more details.
 package garbage
 
 import (
@@ -15,6 +22,7 @@ func init() {
 	http.Handle("/debug/pprof/garbage", http.HandlerFunc(Garbage))
 }
 
+// Garbage returns an HTTP handler that serves the garbage profile.
 func Garbage(w http.ResponseWriter, r *http.Request) {
 	sec, _ := strconv.Atoi(r.FormValue("seconds"))
 	if sec == 0 {
@@ -30,6 +38,10 @@ func Garbage(w http.ResponseWriter, r *http.Request) {
 	WriteGarbageProfile(w, time.Duration(sec)*time.Second, debug != 0)
 }
 
+// WriteGarbageProfile writes a pprof-formatted snapshot of the garbage profile
+// to w. The profile runs twice as long as duration: the first half is
+// calculating the GC period for the duration. The debug parameter enables
+// additional output.
 func WriteGarbageProfile(w io.Writer, duration time.Duration, debug bool) {
 	var garbage, prev []runtime.MemProfileRecord
 
